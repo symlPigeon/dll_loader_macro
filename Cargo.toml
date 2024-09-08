@@ -1,0 +1,16 @@
+[package]
+name = "dll_loader_macro"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+quote = "1.0.37"
+syn = { version = "2.0.77", features = ["full", "extra-traits"] }
+proc-macro2 = { version = "1.0.86", features = ["span-locations"] }
+libloading = "0.8.5"
+bindgen = "0.70.1"
+
+[lib]
+proc-macro = true
