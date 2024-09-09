@@ -13,7 +13,6 @@ struct IdentRenamer<'dict> {
 impl<'dict> syn::visit_mut::VisitMut for IdentRenamer<'dict> {
     fn visit_ident_mut(&mut self, ident: &mut syn::Ident) {
         if let Some(new_name) = self.ident_dict.get(&ident.to_string()) {
-            println!("Renaming Ident: {} -> {}", ident, new_name);
             *ident = syn::Ident::new(new_name, ident.span());
         }
     }
@@ -32,12 +31,10 @@ impl<'dict> syn::visit_mut::VisitMut for IdentRenamer<'dict> {
 
     fn visit_macro_mut(&mut self, mac: &mut syn::Macro) {
         let mut new_tokens = proc_macro2::TokenStream::new();
-        println!("Visiting macro: {:#?}", mac.tokens);
         for token in mac.tokens.clone() {
             match token {
                 TokenTree::Ident(mut ident) => {
                     if let Some(new_name) = self.ident_dict.get(&ident.to_string()) {
-                        println!("Renaming macro Ident: {} -> {}", ident, new_name);
                         ident = syn::Ident::new(new_name, ident.span());
                     }
                     new_tokens.extend(Some(TokenTree::Ident(ident)));
