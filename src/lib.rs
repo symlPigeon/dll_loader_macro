@@ -60,7 +60,6 @@ pub fn generate_dll_loader(input: TokenStream) -> TokenStream {
     let tokens = syn::parse_str::<syn::File>(&bindings.to_string()).unwrap();
 
     let mut func_struct_def = Vec::new();
-    let mut func_struct_init = Vec::new();
     let mut func_struct_impl = Vec::new();
     let mut func_struct_new = Vec::new();
 
@@ -105,7 +104,7 @@ pub fn generate_dll_loader(input: TokenStream) -> TokenStream {
                             .collect();
 
                         let windows_os = "windows";
-                        let unix_os = "unix";
+                        let unix_os = "linux";
 
                         func_struct_def.push(
                             quote!{
@@ -123,13 +122,13 @@ pub fn generate_dll_loader(input: TokenStream) -> TokenStream {
 
                         let error_hint =
                             format!("Unable to load function {:#?} from lib.", ident.to_string());
-                        func_struct_init.push(quote! {
-                            let #def_ident: libloading::Symbol<unsafe extern #abi_name fn (#inputs) #output> = self.lib.get(#u8str_ident).expect(#error_hint);
-                            self.#def_ident = Some(#def_ident.into_raw());
-                        });
 
                         func_struct_impl.push(quote! {
-                            pub unsafe fn #ident(&self, #inputs) #output {
+                            pub unsafe fn #ident(&mut self, #inputs) #output {
+                                if self.#def_ident.is_none() {
+                                    let #def_ident: libloading::Symbol<unsafe extern #abi_name fn (#inputs) #output> = self.lib.get(#u8str_ident).expect(#error_hint);
+                                    self.#def_ident = Some(#def_ident.into_raw());
+                                }
                                 (self.#def_ident.as_ref().unwrap())(#(#fn_call_args,)*)
                             }
                         });
@@ -161,32 +160,23 @@ pub fn generate_dll_loader(input: TokenStream) -> TokenStream {
         impl DllLoader {
             pub unsafe fn new(path: &str) -> Self {
                 let lib = libloading::Library::new(path).unwrap();
-                let mut loader = DllLoader {
+                DllLoader {
                     lib,
                     #(#func_struct_new)*
-                };
-                loader.init();
-                loader
-            }
-
-            unsafe fn init(& mut self) {
-                #(#func_struct_init)*
+                }
             }
 
             #(#func_struct_impl)*
         }
     };
 
-    for key in &ident_dict {
-        println!("{}:{}", key.0, key.1);
-    }
-
     // After generating parsed codes, rename symbols we have changed name.
     let mut ident_renamer = IdentRenamer {
         ident_dict: &ident_dict
     };
 
-    let mut struct_def: syn::File = syn::parse2(struct_def).expect("Failed to parse TokenStream!");
+
+    let mut struct_def = syn::parse2(struct_def).unwrap();
     ident_renamer.visit_file_mut(&mut struct_def);
 
     TokenStream::from(quote!(#struct_def))

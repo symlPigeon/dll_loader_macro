@@ -4,7 +4,7 @@ generate_dll_loader!("tests/my_test.h");
 
 #[test]
 fn test_generate_dll_loader1() {
-    let loader = unsafe { DllLoader::new("tests/my_c_dll.dll") };
+    let mut loader = unsafe { DllLoader::new("tests/my_c_dll.dll") };
     let value = unsafe {
         loader.add(40, 2)
     };
@@ -15,7 +15,7 @@ fn test_generate_dll_loader1() {
 #[should_panic]
 fn test_generate_dll_loader2() {
     unsafe {
-        let loader = DllLoader::new("tests/my_c_dll.dll");
+        let mut loader = DllLoader::new("tests/my_c_dll.dll");
         loader.this_will_crash();
     }
 }
@@ -23,7 +23,7 @@ fn test_generate_dll_loader2() {
 #[test]
 fn test_generate_dll_loader3() {
     unsafe {
-        let loader = DllLoader::new("tests/my_c_dll.dll");
+        let mut loader = DllLoader::new("tests/my_c_dll.dll");
         let mut my_struct = MyStruct {
             a: 20,
             b: 100
