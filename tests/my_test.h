@@ -16,6 +16,8 @@ MY_LIB_API int add(int a, int b); // this is a comment.
 
 MY_LIB_API void this_will_crash();
 
+typedef int my_int32;
+
 typedef struct myStruct {
   int a;
   char b;

@@ -79,9 +79,9 @@ pub fn generate_dll_loader(input: TokenStream) -> TokenStream {
                         // function names to snake case
                         let fn_ident_str = ident.to_string().clone();
                         let fn_ident_converted_str = fn_ident_str.to_case(Case::Snake);
-                        ident_dict.insert(fn_ident_str, fn_ident_converted_str);
+                        ident_dict.insert(fn_ident_str.clone(), fn_ident_converted_str);
 
-                        let def_ident = syn::Ident::new(&format!("addr_of_{}", ident), ident.span());
+                        let def_ident = syn::Ident::new(&format!("addr_of_{}", &fn_ident_str), ident.span());
                         let u8str_ident =
                             syn::LitByteStr::new(ident.to_string().as_bytes(), ident.span());
 
@@ -142,6 +142,11 @@ pub fn generate_dll_loader(input: TokenStream) -> TokenStream {
             },
             syn::Item::Struct(struct_def) => {
                 let ident_name = struct_def.ident.to_string().clone();
+                let converted_name = ident_name.to_case(Case::UpperCamel);
+                ident_dict.insert(ident_name, converted_name);
+            },
+            syn::Item::Type(type_def) => {
+                let ident_name = type_def.ident.to_string().clone();
                 let converted_name = ident_name.to_case(Case::UpperCamel);
                 ident_dict.insert(ident_name, converted_name);
             },
