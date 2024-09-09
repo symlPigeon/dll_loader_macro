@@ -12,7 +12,7 @@
 
 #define ANSWER 42
 
-MY_LIB_API int add(int a, int b);
+MY_LIB_API int add(int a, int b); // this is a comment.
 
 MY_LIB_API void this_will_crash();
 
