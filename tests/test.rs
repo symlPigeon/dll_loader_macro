@@ -25,11 +25,11 @@ fn test_generate_dll_loader3() {
     unsafe {
         let mut loader = DllLoader::new("tests/my_c_dll.dll");
         let mut my_struct = MyStruct {
-            a: 20,
-            b: 100
+            bad_name_1: 20,
+            bad_name_2: 100
         };
         loader.change_struct(10, 101, &mut my_struct);
-        assert_eq!(my_struct.a, 10);
-        assert_eq!(my_struct.b, 101);
+        assert_eq!(my_struct.bad_name_1, 10);
+        assert_eq!(my_struct.bad_name_2, 101);
     }
 }

@@ -19,10 +19,12 @@ MY_LIB_API void this_will_crash();
 typedef int my_int32;
 
 typedef struct myStruct {
-  int a;
-  char b;
+  int badName_1;
+  char BAD_NAME_2;
 } myStruct;
 
 MY_LIB_API void change_struct(int a, char b, myStruct *c);
+
+void badFunc(myStruct a) { a.BAD_NAME_2 = 1; }
 
 #endif
