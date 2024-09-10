@@ -89,6 +89,23 @@ impl<'dict> syn::visit_mut::VisitMut for IdentRenamer<'dict> {
             self.visit_impl_item_mut(item);
         }
     }
+
+    fn visit_fn_arg_mut(&mut self, fn_arg: &mut syn::FnArg) {
+        match *fn_arg {
+            syn::FnArg::Typed(ref mut pat_type) => {
+                let pat = &mut pat_type.pat;
+                if let syn::Pat::Ident(ref mut ident) = **pat {
+                    let ident_name = ident.ident.to_string();
+                    let converted_ident_name = ident_name.to_case(Case::Snake);
+                    ident.ident = syn::Ident::new(&converted_ident_name, ident.span());
+                }
+                self.visit_pat_type_mut(pat_type);
+            },
+            syn::FnArg::Receiver(ref mut recv) => {
+                self.visit_receiver_mut(recv);
+            }
+        }
+    }
 }
 
 struct ImplFieldRenamer<'dict> {
@@ -117,21 +134,6 @@ pub fn generate_dll_loader(input: TokenStream) -> TokenStream {
         .expect("Failed to generate bindings.");
 
     let mut tokens = syn::parse_str::<syn::File>(&bindings.to_string()).unwrap();
-
-    {
-        let test = r"
-        struct A {
-            a: int,
-            b: int
-        }
-        impl A {
-            fn a(&self) {
-              let c = self.a + self.b;
-            }
-        }
-        ";
-        println!("{:#?}", syn::parse_str::<syn::File>(test));
-    }
 
     let mut func_struct_def = Vec::new();
     let mut func_struct_impl = Vec::new();
@@ -170,8 +172,9 @@ pub fn generate_dll_loader(input: TokenStream) -> TokenStream {
                                 }
                             })
                             .filter_map(|pat| {
+                                // args in func sig will be converted later
                                 if let syn::Pat::Ident(ident) = pat.as_ref() {
-                                    Some(ident.ident.clone())
+                                    Some(syn::Ident::new(&ident.ident.to_string().to_case(Case::Snake), ident.span()))
                                 } else {
                                     None
                                 }
@@ -234,6 +237,15 @@ pub fn generate_dll_loader(input: TokenStream) -> TokenStream {
                 let ident_name = type_def.ident.to_string().clone();
                 let converted_name = ident_name.to_case(Case::UpperCamel);
                 ident_dict.insert(ident_name, converted_name);
+            },
+            syn::Item::Impl(item_impl) => {
+                for impl_item in &item_impl.items {
+                    if let syn::ImplItem::Fn(impl_fn) = impl_item {
+                        let ident_name = impl_fn.sig.ident.to_string();
+                        let converted_name = ident_name.to_case(Case::Snake);
+                        ident_dict.insert(ident_name, converted_name);
+                    }
+                }
             },
             _ => {
             }
